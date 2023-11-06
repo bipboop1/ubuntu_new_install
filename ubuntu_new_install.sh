@@ -168,13 +168,37 @@ if confirm_install "Brave browser"; then
     sudo apt install brave-browser
 fi
 
-# Install VLC and MPV
 if confirm_install "VLC"; then
     sudo apt install vlc
 fi
 
 if confirm_install "MPV"; then
     sudo apt install mpv
+fi
+
+if confirm_install "ffmpeg"; then
+	sudo apt install ffmpeg
+fi
+
+# Install torrenting stuff
+echo -e "${BOLD_YELLOW}entering torrents and downloads section${NC}"
+
+if confirm_install "Transmission"; then
+	sudo apt install transmission
+fi
+
+if confirm_install "qBittorrent"; then
+	sudo apt install qbittorrent
+fi
+
+if confirm_install "yt-dlp"; then
+	sudo wget -qO /usr/local/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp
+	sudo chmod a+rx /usr/local/bin/yt-dlp
+fi
+
+if confirm_install "seedmage"; then
+	sudo wget -qO /usr/local/bin/seedmage https://github.com/DimitriFourny/seedmage.git
+	sudo chmod a+rx /usr/local/bin/seedmage
 fi
 
 # Install graphics and creation programs
