@@ -34,7 +34,7 @@ ${NC}"
 
 confirm_update()
 {
-	read -p "${BOLD_CYAN}Do you want to update and upgrade $1? (y/n): ${NC}" choice
+	read -p -e "${BOLD_CYAN}Do you want to update and upgrade $1? (y/n): ${NC}" choice
 	if [ "$choice" = "y"  ]; then
 		return 0
 	elif [ "$choice" = "yes" ]; then
