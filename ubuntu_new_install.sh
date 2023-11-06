@@ -251,4 +251,6 @@ if confirm_install "0 A.D."; then
 fi
 
 echo -e "${BOLD_GREEN}All selected programs and packages have been installed.${NC} ${BLUE}Except if there were any errors, i dunno i dont keep track of that.${NC}"
-echo -e "${BOLD_GREEN}Enjoy!${NC}"
+echo -e "${BOLD_GREEN}.--------.
+| Enjoy! |
+'--------'${NC}"
