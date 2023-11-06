@@ -31,7 +31,7 @@ full_list_menu()
 skip_to_section()
 {
 	echo -e "${BOLD_YELLOW}This is the list of sections.
-	Select a section number to skip to, or type "list" to see the list of all programs.${NC}"
+	Select a section number to skip to, or type \"list\" to see the list of all programs.${NC}"
 	echo -e "${BOLD_YELLOW}
 	1.Update apt and apt_get
 	2.Essential packages and dev
