@@ -84,7 +84,7 @@ echo -e "${CYAN}▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄�
 ${NC}"
 
 # menu
-echo -e "${BOLD_BLUE}Would you like to use the full program, or skip to a specific section?${NC}"
+echo -e "${BOLD_CYAN}Would you like to use the full program, or skip to a specific section?${NC}"
 echo -e "1.full program		2.see list and skip		0.exit program"
 read choice
 if [ "$choice" = "1" ]; then
