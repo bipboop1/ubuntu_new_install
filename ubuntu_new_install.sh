@@ -32,6 +32,15 @@ echo -e "${CYAN}▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄�
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 ${NC}"
 
+# Function to set 42 logins
+set42intra()
+{
+	echo -e "${BOLD_YELLOW}Enter your 42 login: ${NC}"
+	read login
+	echo "USER=$login" >> ~/.zshrc
+	echo "MAIL=$login@student.42.fr" >> ~/.zshrc
+}
+
 confirm_update()
 {
 	local pkg_name="$1" # this is kinda useless, i could just use $1 but sure ok i guess its more readable
@@ -42,7 +51,7 @@ confirm_update()
 	elif [ "$choice" = "n" ] || [ "$choice" = "no" ]; then
 		return 1
 	else
-		echo -e "${BOLD_RED}Invalid choice. Please try again.${NC}"
+		echo -e "${BOLD_RED}Invalid answer. Use y/n/yes/no.${NC}"
 		confirm_update $pkg_name
 	fi
 }
@@ -58,7 +67,7 @@ confirm_install()
 	elif [ "$choice" = "n" ] || [ "$choice" = "no" ]; then
 		return 1
 	else
-		echo -e "${BOLD_RED}Invalid choice. Please try again.${NC}"
+		echo -e "${BOLD_RED}Invalid aswer. Use y/n/yes/noy${NC}"
 		confirm_install $pkg_name
 	fi
 }
@@ -91,6 +100,13 @@ if confirm_install "zsh"; then
     sudo apt install zsh
 fi
 
+# Install Oh My Zsh and set it as the default shell
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW}Setting zsh as default shell will close the program. You'll have to restart this script.${NC}"
+if confirm_install "Oh My Zsh"; then
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    sudo chsh -s $(which zsh) $(whoami)
+fi
+
 if confirm_install "vim"; then
     sudo apt install vim
 fi
@@ -103,16 +119,17 @@ if confirm_install "clang"; then
     sudo apt install clang
 fi
 
-if confirm_install "pip3"; then
-    sudo apt install python3-pip
+if confirm_install "python3"; then
+	sudo apt install python3
 fi
 
 if confirm_install "pip"; then
 	sudo apt install python-pip
 fi
 
-if confirm_install "python3"; then
-	sudo apt install python3
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} installing pip3 removes pip, i guess${NC}"
+if confirm_install "pip3"; then
+    sudo apt install python3-pip
 fi
 
 #if confirm_install "python"; then
@@ -121,12 +138,6 @@ fi
 
 if confirm_install "wget"; then
 	sudo apt-get install wget
-fi
-
-# Install Oh My Zsh and set it as the default shell
-if confirm_install "Oh My Zsh"; then
-    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-    sudo chsh -s $(which zsh) $(whoami)
 fi
 
 # Install Visual Studio Code via Snap
@@ -153,7 +164,12 @@ if confirm_install "cmake"; then
 fi
 
 if confirm_install "42 header"; then
-	curl https://raw.githubusercontent.com/42Paris/42header/master/install.sh | bash
+	wget -qO ~/.vim/plugin https://raw.githubusercontent.com/42Paris/42header/71e6a4df6d72ae87a080282bf45bb993da6146b2/plugin/stdheader.vim
+	echo -e "${BOLD_YELLOW}Set your header login now?${NC}"
+	read choice
+	if [ "$choice" = 'y' ] || [ "$choice" = "yes"]; then
+		set42intra
+	fi
 fi
 
 if confirm_install "norminette"; then
@@ -221,9 +237,6 @@ fi
 
 # Install messaging apps
 echo -e "${BOLD_YELLOW}entering messaging apps section${NC}"
-if confirm_install "Discord"; then
-	sudo snap install discord
-fi
 
 if confirm_install "Telegram"; then
 	sudo apt install telegram-desktop
@@ -240,6 +253,10 @@ if confirm_install "Signal"; then
 
 # 3. Update your package database and install Signal:
 	sudo snap install signal-desktop
+fi
+
+if confirm_install "Discord"; then
+	sudo snap install discord
 fi
 
 # Install games
