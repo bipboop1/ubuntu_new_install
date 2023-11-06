@@ -120,7 +120,7 @@ else
 fi
 
 # Update and upgrade the system
-if [ SECT <= 1 ]; then
+if [ $SECT <= 1 ]; then
 	echo -e "${BOLD_YELLOW}updating and upgrading the system${NC}"
 	if confirm_update "apt"; then
 		sudo apt update
@@ -135,7 +135,7 @@ if [ SECT <= 1 ]; then
 fi
 
 # Install essential packages and development
-if [ SECT <= 2 ]; then
+if [ $SECT <= 2 ]; then
 	echo -e "${BOLD_YELLOW}entering essential packages and development section${NC}"
 	if confirm_install "curl"; then
 	    sudo apt install curl
