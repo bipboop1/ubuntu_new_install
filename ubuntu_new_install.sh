@@ -1,11 +1,53 @@
 #!/bin/bash
 
-# Update and upgrade the system
-echo "update and upgrade the system"
-sudo apt update
-sudo apt upgrade
-sudo apt-get update
-sudo apt-get upgrade
+# ANSI color codes
+YELLOW='\033[0;33m'
+BOLD_YELLOW='\033[1;33m'
+BLACK='\033[0;30m'
+BOLD_BLACK='\033[1;30m'
+RED='\033[0;31m'
+BOLD_RED='\033[1;31m'
+GREEN='\033[0;32m'
+BOLD_GREEN='\033[1;32m'
+BLUE='\033[0;34m'
+BOLD_BLUE='\033[1;34m'
+PURPLE='\033[0;35m'
+BOLD_PURPLE='\033[1;35m'
+CYAN='\033[0;36m'
+BOLD_CYAN='\033[1;36m'
+WHITE='\033[0;37m'
+BOLD_WHITE='\033[1;37m'
+MAGENTA='\033[0;95m'
+BOLD_MAGENTA='\033[1;95m'
+NC='\033[0m' # No Color
+
+echo -e "${BOLD_CYAN}
+				.---------------.
+				| welcome to my |
+				'---------------'"
+echo -e "${CYAN}▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+██ ██ █ ▄▄▀█ ██ █ ▄▄▀█▄ ▄█ ██ ███▀▄▄▀█ █▀█ ▄▄▄████▄██ ▄▄▀█ ▄▄█▄ ▄█ ▄▄▀█ ██ ██ ▄▄█ ▄▄▀██
+██ ██ █ ▄▄▀█ ██ █ ██ ██ ██ ██ ███ ▀▀ █ ▄▀█ █▄▀████ ▄█ ██ █▄▄▀██ ██ ▀▀ █ ██ ██ ▄▄█ ▀▀▄██
+██▄▀▀▄█▄▄▄▄██▄▄▄█▄██▄██▄███▄▄▄███ ████▄█▄█▄▄▄▄███▄▄▄█▄██▄█▄▄▄██▄██▄██▄█▄▄█▄▄█▄▄▄█▄█▄▄██
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+${NC}"
+
+confirm_update()
+{
+	read -p "${BOLD_CYAN}Do you want to update and upgrade $1? (y/n): ${NC}" choice
+	if [ "$choice" = "y"  ]; then
+		return 0
+	elif [ "$choice" = "yes" ]; then
+		return 0
+	elif [ "$choice" = "n" ]; then
+		return 1
+	elif [ "$choice" = "no" ]; then
+		return 1
+	else
+		echo -e "${BOLD_RED}Invalid choice. Please try again.${NC}"
+		confirm_update $1
+	fi
+}
 
 # Function to confirm installation
 confirm_install()
@@ -20,13 +62,27 @@ confirm_install()
 	elif [ "$choice" = "no" ]; then
 		return 1
 	else
-		echo "Invalid choice. Please try again."
+		echo -e "${BOLD_RED}Invalid choice. Please try again.${NC}"
 		confirm_install $1
 	fi
 }
 
+
+# Update and upgrade the system
+echo -e "${BOLD_YELLOW}updating and upgrading the system${NC}"
+if confirm_update "apt"; then
+	sudo apt update
+	sudo apt upgrade
+fi	
+
+if confirm_update "apt-get"; then
+	sudo apt-get update
+	sudo apt-get upgrade
+fi
+echo -e "${YELLOW}apt and apt-get are now up to date.${NC}"
+
 # Install essential packages and development
-echo "entering essential packages and development section"
+echo -e "${BOLD_YELLOW}entering essential packages and development section${NC}"
 if confirm_install "curl"; then
     sudo apt install curl
 fi
@@ -83,7 +139,7 @@ if confirm_install "Visual Studio Code"; then
 fi
 
 # Install 42 school stuff
-echo "entering 42 school stuff section"
+echo -e "${BOLD_YELLOW}entering 42 school stuff section${NC}"
 if confirm_install "gcc"; then
     sudo apt install gcc
 fi
@@ -109,7 +165,7 @@ if confirm_install "norminette"; then
 fi
 
 # General purpose programs
-echo "entering general purpose section"
+echo -e "${BOLD_YELLOW}entering general purpose section${NC}"
 
 # Install Brave browser
 if confirm_install "Brave browser"; then
@@ -126,7 +182,7 @@ if confirm_install "MPV"; then
 fi
 
 # Install graphics and creation programs
-echo "entering graphics programs section"
+echo -e "${BOLD_YELLOW}entering graphics programs section${NC}"
 if confirm_install "GIMP"; then
 	sudo apt install gimp
 fi
@@ -144,7 +200,7 @@ if confirm_install "Blender"; then
 fi
 
 # Install messaging apps
-echo "entering messaging apps section"
+echo -e "${BOLD_YELLOW}entering messaging apps section${NC}"
 if confirm_install "Discord"; then
 	sudo snap install discord
 fi
@@ -158,11 +214,12 @@ if confirm_install "Signal"; then
 fi
 
 # Install games
-echo "entering games section"
+echo -e "${BOLD_YELLOW}entering games section${NC}"
 if confirm_install "0 A.D."; then
 	sudo add-apt-repository ppa:wfg/0ad
 	sudo apt-get update
 	sudo apt-get install 0ad
 fi
 
-echo "All programs and packages have been installed."
+echo -e "${BOLD_GREEN}All selected programs and packages have been installed.${NC} Except if there were any errors, i dunno i dont keep track of that."
+echo -e "${BOLD_GREEN}Enjoy!${NC}"
