@@ -20,6 +20,7 @@ BOLD_WHITE='\033[1;37m'
 MAGENTA='\033[0;95m'
 BOLD_MAGENTA='\033[1;95m'
 NC='\033[0m' # No Color
+SECT=0 # section number for skipping
 
 # Function to display full list of programs and packages
 full_list_menu()
@@ -42,6 +43,8 @@ skip_to_section()
 	7.Messaging apps
 	8.Games
 	${NC}"
+	read choice
+	SECT=$choice
 }
 
 # Function to set 42 logins in the header
@@ -117,30 +120,34 @@ else
 fi
 
 # Update and upgrade the system
-echo -e "${BOLD_YELLOW}updating and upgrading the system${NC}"
-if confirm_update "apt"; then
-	sudo apt update
-	sudo apt upgrade
-fi	
+if [ SECT <= 1 ]; then
+	echo -e "${BOLD_YELLOW}updating and upgrading the system${NC}"
+	if confirm_update "apt"; then
+		sudo apt update
+		sudo apt upgrade
+	fi	
 
-if confirm_update "apt-get"; then
-	sudo apt-get update
-	sudo apt-get upgrade
+	if confirm_update "apt-get"; then
+		sudo apt-get update
+		sudo apt-get upgrade
+	fi
+	echo -e "${YELLOW}apt and apt-get are now up to date.${NC}"
 fi
-echo -e "${YELLOW}apt and apt-get are now up to date.${NC}"
 
 # Install essential packages and development
-echo -e "${BOLD_YELLOW}entering essential packages and development section${NC}"
-if confirm_install "curl"; then
-    sudo apt install curl
-fi
+if [ SECT <= 2 ]; then
+	echo -e "${BOLD_YELLOW}entering essential packages and development section${NC}"
+	if confirm_install "curl"; then
+	    sudo apt install curl
+	fi
 
-if confirm_install "git"; then
-    sudo apt install git
-fi
+	if confirm_install "git"; then
+	    sudo apt install git
+	fi
 
-if confirm_install "zsh"; then
-    sudo apt install zsh
+	if confirm_install "zsh"; then
+	    sudo apt install zsh
+	fi
 fi
 
 # Install Oh My Zsh and set it as the default shell
