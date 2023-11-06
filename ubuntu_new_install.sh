@@ -21,11 +21,21 @@ MAGENTA='\033[0;95m'
 BOLD_MAGENTA='\033[1;95m'
 NC='\033[0m' # No Color
 
-# Function to display the menu and skip to a section
-skip_menu()
+# Function to display full list of programs and packages
+full_list_menu()
 {
 	echo -e "${BOLD_YELLOW}This is the list of all programs and packages to be installed. Select a section number to skip to.${NC}"
-	echo -e "${BOLD_YELLOW}1.Update apt and apt_get"
+}
+
+# Function to display list of sections and skip
+skip_to_section()
+{
+	echo -e "${BOLD_YELLOW}This is the list of sections.
+	Select a section number to skip to, or type "list" to see the list of all programs.${NC}"
+	echo -e "${BOLD_YELLOW}
+	1.Update apt and apt_get
+	2.
+	"
 }
 
 # Function to set 42 logins in the header
@@ -85,12 +95,14 @@ ${NC}"
 
 # menu
 echo -e "${BOLD_CYAN}Would you like to use the full program, or skip to a specific section?${NC}"
-echo -e "1.full program		2.see list and skip		0.exit program"
+echo -e "1.full program		2.skip to section		3.see full list		0.exit program"
 read choice
 if [ "$choice" = "1" ]; then
 	echo -e "${BOLD_YELLOW}Launching full installer.${NC}"
 elif [ "$choice" = "2" ]; then
-	skip_menu
+	skip_to_section
+elif [ "$choice" = "3" ]; then
+
 elif [ "$choice" = "0" ]; then
 	echo -e "${BOLD_YELLOW}Exiting program.${NC}"
 	exit 0
