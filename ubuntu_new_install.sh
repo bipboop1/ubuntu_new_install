@@ -34,8 +34,14 @@ skip_to_section()
 	Select a section number to skip to, or type "list" to see the list of all programs.${NC}"
 	echo -e "${BOLD_YELLOW}
 	1.Update apt and apt_get
-	2.
-	"
+	2.Essential packages and dev
+	3.42 school stuff
+	4.General purpose programs
+	5.Torrents and downloads
+	6.Graphics and creation programs
+	7.Messaging apps
+	8.Games
+	${NC}"
 }
 
 # Function to set 42 logins in the header
