@@ -250,5 +250,5 @@ if confirm_install "0 A.D."; then
 	sudo apt-get install 0ad
 fi
 
-echo -e "${BOLD_GREEN}All selected programs and packages have been installed.${NC} Except if there were any errors, i dunno i dont keep track of that."
+echo -e "${BOLD_GREEN}All selected programs and packages have been installed.${NC} ${BLACK}Except if there were any errors,${BOLD_BLACK} i dunno i dont keep track of that.${NC}"
 echo -e "${BOLD_GREEN}Enjoy!${NC}"
