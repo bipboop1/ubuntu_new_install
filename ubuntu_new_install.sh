@@ -44,7 +44,7 @@ skip_to_section()
 	8.Games
 	${NC}"
 	read choice
-	SECT=$choice
+	let SECT=$(($choice + 0))
 }
 
 # Function to set 42 logins in the header
