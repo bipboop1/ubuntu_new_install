@@ -21,18 +21,14 @@ MAGENTA='\033[0;95m'
 BOLD_MAGENTA='\033[1;95m'
 NC='\033[0m' # No Color
 
-echo -e "${BOLD_CYAN}
-				.---------------.
-				| welcome to my |
-				'---------------'"
-echo -e "${CYAN}▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-██ ██ █ ▄▄▀█ ██ █ ▄▄▀█▄ ▄█ ██ ███▀▄▄▀█ █▀█ ▄▄▄████▄██ ▄▄▀█ ▄▄█▄ ▄█ ▄▄▀█ ██ ██ ▄▄█ ▄▄▀██
-██ ██ █ ▄▄▀█ ██ █ ██ ██ ██ ██ ███ ▀▀ █ ▄▀█ █▄▀████ ▄█ ██ █▄▄▀██ ██ ▀▀ █ ██ ██ ▄▄█ ▀▀▄██
-██▄▀▀▄█▄▄▄▄██▄▄▄█▄██▄██▄███▄▄▄███ ████▄█▄█▄▄▄▄███▄▄▄█▄██▄█▄▄▄██▄██▄██▄█▄▄█▄▄█▄▄▄█▄█▄▄██
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-${NC}"
+# Function to display the menu and skip to a section
+skip_menu()
+{
+	echo -e "${BOLD_YELLOW}This is the list of all programs and packages to be installed. Select a section number to skip to.${NC}"
+	echo -e "${BOLD_YELLOW}1.Update apt and apt_get"
+}
 
-# Function to set 42 logins
+# Function to set 42 logins in the header
 set42intra()
 {
 	echo -e "${BOLD_YELLOW}Enter your 42 login: ${NC}"
@@ -41,6 +37,7 @@ set42intra()
 	echo "MAIL=$login@student.42.fr" >> ~/.zshrc
 }
 
+# Function to confirm update/upgrade of apt/apt-get
 confirm_update()
 {
 	local pkg_name="$1" # this is kinda useless, i could just use $1 but sure ok i guess its more readable
@@ -56,7 +53,7 @@ confirm_update()
 	fi
 }
 
-# Function to confirm installation
+# Function to confirm installation of package
 confirm_install()
 {
 	local pkg_name="$1"
@@ -72,6 +69,34 @@ confirm_install()
 	fi
 }
 
+# intro
+echo -e "${BOLD_CYAN}
+				.---------------.
+				| welcome to my |
+				'---------------'"
+echo -e "${CYAN}▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+██ ██ █ ▄▄▀█ ██ █ ▄▄▀█▄ ▄█ ██ ███▀▄▄▀█ █▀█ ▄▄▄████▄██ ▄▄▀█ ▄▄█▄ ▄█ ▄▄▀█ ██ ██ ▄▄█ ▄▄▀██
+██ ██ █ ▄▄▀█ ██ █ ██ ██ ██ ██ ███ ▀▀ █ ▄▀█ █▄▀████ ▄█ ██ █▄▄▀██ ██ ▀▀ █ ██ ██ ▄▄█ ▀▀▄██
+██▄▀▀▄█▄▄▄▄██▄▄▄█▄██▄██▄███▄▄▄███ ████▄█▄█▄▄▄▄███▄▄▄█▄██▄█▄▄▄██▄██▄██▄█▄▄█▄▄█▄▄▄█▄█▄▄██
+▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+
+
+${NC}"
+
+# menu
+echo -e "${BOLD_BLUE}Would you like to use the full program, or skip to a specific section?${NC}"
+echo -e "1.full program		2.see list and skip		0.exit program"
+read choice
+if [ "$choice" = "1" ]; then
+	echo -e "${BOLD_YELLOW}Launching full installer.${NC}"
+elif [ "$choice" = "2" ]; then
+	skip_menu
+elif [ "$choice" = "0" ]; then
+	echo -e "${BOLD_YELLOW}Exiting program.${NC}"
+	exit 0
+else
+	echo -e "${BOLD_RED}Invalid answer. Launching full installer.${NC}"
+fi
 
 # Update and upgrade the system
 echo -e "${BOLD_YELLOW}updating and upgrading the system${NC}"
@@ -101,7 +126,7 @@ if confirm_install "zsh"; then
 fi
 
 # Install Oh My Zsh and set it as the default shell
-echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW}Setting zsh as default shell will close the program. You'll have to restart this script.${NC}"
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW}Setting zsh as default shell will close this program. You'll have to restart the script.${NC}"
 if confirm_install "Oh My Zsh"; then
     sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     sudo chsh -s $(which zsh) $(whoami)
@@ -167,14 +192,14 @@ if confirm_install "42 header"; then
 	wget -qO ~/.vim/plugin https://raw.githubusercontent.com/42Paris/42header/71e6a4df6d72ae87a080282bf45bb993da6146b2/plugin/stdheader.vim
 	echo -e "${BOLD_YELLOW}Set your header login now?${NC}"
 	read choice
-	if [ "$choice" = 'y' ] || [ "$choice" = "yes"]; then
+	if [ "$choice" = "y" ] || [ "$choice" = "yes" ]; then
 		set42intra
 	fi
 fi
 
-if confirm_install "norminette"; then
-	curl -o norminette.deb -L
-fi
+#if confirm_install "norminette"; then
+#	curl -o norminette.deb -L
+#fi
 
 # General purpose programs
 echo -e "${BOLD_YELLOW}entering general purpose section${NC}"
