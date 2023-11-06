@@ -34,15 +34,10 @@ ${NC}"
 
 confirm_update()
 {
-<<<<<<< HEAD
-	read -p -e "${BOLD_CYAN}Do you want to update and upgrade $1? (y/n): ${NC}" choice
-	if [ "$choice" = "y"  ]; then
-=======
 	local pkg_name="$1" # this is kinda useless, i could just use $1 but sure ok i guess its more readable
 	echo -e "${BOLD_CYAN}Do you want to update and upgrade $pkg_name? (y/n): ${NC}"
 	read choice
 	if [ "$choice" = "y"  ] || [ "$choice" = "yes" ]; then
->>>>>>> 02874dc032c3b21218421a2c373b1e199f6e2136
 		return 0
 	elif [ "$choice" = "n" ] || [ "$choice" = "no" ]; then
 		return 1
