@@ -108,10 +108,10 @@ if [ "$choice" = "1" ]; then
 elif [ "$choice" = "2" ]; then
 	skip_to_section
 elif [ "$choice" = "3" ]; then
-
+	full_list_menu
 elif [ "$choice" = "0" ]; then
 	echo -e "${BOLD_YELLOW}Exiting program.${NC}"
-#	exit 0
+	exit 0
 else
 	echo -e "${BOLD_RED}Invalid answer. Launching full installer.${NC}"
 fi
