@@ -34,36 +34,32 @@ ${NC}"
 
 confirm_update()
 {
-	read -p "${BOLD_CYAN}Do you want to update and upgrade $1? (y/n): ${NC}" choice
-	if [ "$choice" = "y"  ]; then
+	local pkg_name="$1" # this is kinda useless, i could just use $1 but sure ok i guess its more readable
+	echo -e "${BOLD_CYAN}Do you want to update and upgrade $pkg_name? (y/n): ${NC}"
+	read choice
+	if [ "$choice" = "y"  ] || [ "$choice" = "yes" ]; then
 		return 0
-	elif [ "$choice" = "yes" ]; then
-		return 0
-	elif [ "$choice" = "n" ]; then
-		return 1
-	elif [ "$choice" = "no" ]; then
+	elif [ "$choice" = "n" ] || [ "$choice" = "no" ]; then
 		return 1
 	else
 		echo -e "${BOLD_RED}Invalid choice. Please try again.${NC}"
-		confirm_update $1
+		confirm_update $pkg_name
 	fi
 }
 
 # Function to confirm installation
 confirm_install()
 {
-    read -p "Do you want to install $1? (y/n): " choice
-    if [ "$choice" = "y"  ]; then
-        return 0
-	elif [ "$choice" = "yes" ]; then
+	local pkg_name="$1"
+	echo -e "${BOLD_CYAN}Do you want to install $pkg_name? (y/n): ${NC}"
+	read choice
+	if [ "$choice" = "y"  ] || [ "$choice" = "yes" ]; then
 		return 0
-	elif [ "$choice" = "n" ]; then
-		return 1
-	elif [ "$choice" = "no" ]; then
+	elif [ "$choice" = "n" ] || [ "$choice" = "no" ]; then
 		return 1
 	else
 		echo -e "${BOLD_RED}Invalid choice. Please try again.${NC}"
-		confirm_install $1
+		confirm_install $pkg_name
 	fi
 }
 
