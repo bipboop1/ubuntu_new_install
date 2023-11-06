@@ -2,6 +2,7 @@
 
 # ANSI color codes
 YELLOW='\033[0;33m'
+BOLD_YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo "
@@ -13,7 +14,7 @@ echo "
 "
 
 # Update and upgrade the system
-echo -e "${YELLOW}updating and upgrading the system${NC}"
+echo -e "${BOLD_YELLOW}updating and upgrading the system${NC}"
 sudo
 #sudo apt update
 #sudo apt upgrade
