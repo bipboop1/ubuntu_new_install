@@ -195,6 +195,10 @@ if confirm_install "Visual Studio Code"; then
     sudo snap install --classic code
 fi
 
+if confirm_install "Arduino IDE"; then
+	sudo apt install arduino
+fi
+
 # Install 42 school stuff
 echo -e "${BOLD_YELLOW}entering 42 school stuff section${NC}"
 if confirm_install "gcc"; then
