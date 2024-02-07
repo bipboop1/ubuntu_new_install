@@ -89,6 +89,7 @@ confirm_install()
 }
 
 # intro
+sleep 2
 echo -e "${BOLD_CYAN}
 				.---------------.
 				| welcome to my |
@@ -99,9 +100,9 @@ echo -e "${CYAN}▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄�
 ██▄▀▀▄█▄▄▄▄██▄▄▄█▄██▄██▄███▄▄▄███ ████▄█▄█▄▄▄▄███▄▄▄█▄██▄█▄▄▄██▄██▄██▄█▄▄█▄▄█▄▄▄█▄█▄▄██
 ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 
-			   .--------------------.
-			   | manjaro edition ;) |
-			   '--------------------'
+				   .--------------------.
+				   | manjaro edition ;) |
+				   '--------------------'
 
 
 ${NC}"
@@ -123,6 +124,10 @@ else
 	echo -e "${BOLD_RED}Invalid answer. Launching full installer.${NC}"
 fi
 
+# package manager selection
+echo -e "${BOLD_CYAN}What is your package manager?${NC}"
+read pkg_manager
+
 # Update and upgrade the system
 #if [ $SECT <= 1 ]; then
 	echo -e "${BOLD_YELLOW}updating and upgrading the system${NC}"
@@ -135,22 +140,27 @@ fi
 		sudo apt-get update
 		sudo apt-get upgrade
 	fi
-	echo -e "${YELLOW}apt and apt-get are now up to date.${NC}"
+
+	if confirm_update "pamac"; then
+		sudo pamac update
+		sudo pamac upgrade
+	fi
+	echo -e "${YELLOW}apt/apt-get/pamac are now up to date.${NC}"
 #fi
 
 # Install essential packages and development
 #if [ $SECT <= 2 ]; then
 	echo -e "${BOLD_YELLOW}entering essential packages and development section${NC}"
 	if confirm_install "curl"; then
-	    sudo apt install curl
+	    sudo $pkg_manager install curl
 	fi
 
 	if confirm_install "git"; then
-	    sudo apt install git
+	    sudo $pkg_manager install git
 	fi
 
 	if confirm_install "zsh"; then
-	    sudo apt install zsh
+	    sudo $pkg_manager install zsh
 	fi
 #fi
 
@@ -162,63 +172,71 @@ if confirm_install "Oh My Zsh"; then
 fi
 
 if confirm_install "vim"; then
-    sudo apt install vim
+    sudo $pkg_manager install vim
 fi
 
 if confirm_install "tree"; then
-    sudo apt install tree
+    sudo $pkg_manager install tree
 fi
 
 if confirm_install "clang"; then
-    sudo apt install clang
+    sudo $pkg_manager install clang
 fi
 
 if confirm_install "python3"; then
-	sudo apt install python3
+	sudo $pkg_manager install python3
 fi
 
 if confirm_install "pip"; then
-	sudo apt install python-pip
+	sudo $pkg_manager install python-pip
 fi
 
 echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} installing pip3 removes pip, i guess${NC}"
 if confirm_install "pip3"; then
-    sudo apt install python3-pip
+    sudo $pkg_manager install python3-pip
 fi
 
 #if confirm_install "python"; then
-#	sudo apt install python
+#	sudo $pkg_manager install python
 #fi
 
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using apt-get.${NC}"
 if confirm_install "wget"; then
 	sudo apt-get install wget
 fi
 
 # Install Visual Studio Code via Snap
-if confirm_install "Visual Studio Code"; then
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using snap.${NC}"
+if confirm_install "Visual Studio Code (ubuntu)"; then
     sudo snap install --classic code
 fi
 
+# Install Visual Studio Code via flatpak
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using flatpak.${NC}"
+if confirm_install "Visual Studio Code (manjaro)"; then
+    sudo flatpak install com.visualstudio.code
+fi
+
 if confirm_install "Arduino IDE"; then
-	sudo apt install arduino
+	sudo $pkg_manager install arduino
 fi
 
 # Install 42 school stuff
 echo -e "${BOLD_YELLOW}entering 42 school stuff section${NC}"
 if confirm_install "gcc"; then
-    sudo apt install gcc
+    sudo $pkg_manager install gcc
 fi
 
 if confirm_install "make"; then
-    sudo apt install make
+    sudo $pkg_manager install make
 fi
 
 if confirm_install "valgrind"; then
-    sudo apt install valgrind
+    sudo $pkg_manager install valgrind
 fi
 
 if confirm_install "cmake"; then
-    sudo apt install cmake
+    sudo $pkg_manager install cmake
 fi
 
 if confirm_install "42 header"; then
@@ -239,30 +257,30 @@ echo -e "${BOLD_YELLOW}entering general purpose section${NC}"
 
 # Install Brave browser
 if confirm_install "Brave browser"; then
-    sudo apt install brave-browser
+    sudo $pkg_manager install brave-browser
 fi
 
 if confirm_install "VLC"; then
-    sudo apt install vlc
+    sudo $pkg_manager install vlc
 fi
 
 if confirm_install "MPV"; then
-    sudo apt install mpv
+    sudo $pkg_manager install mpv
 fi
 
 if confirm_install "ffmpeg"; then
-	sudo apt install ffmpeg
+	sudo $pkg_manager install ffmpeg
 fi
 
 # Install torrenting stuff
 echo -e "${BOLD_YELLOW}entering torrents and downloads section${NC}"
 
 if confirm_install "Transmission"; then
-	sudo apt install transmission
+	sudo $pkg_manager install transmission
 fi
 
 if confirm_install "qBittorrent"; then
-	sudo apt install qbittorrent
+	sudo $pkg_manager install qbittorrent
 fi
 
 if confirm_install "yt-dlp"; then
@@ -278,28 +296,29 @@ fi
 # Install graphics and creation programs
 echo -e "${BOLD_YELLOW}entering graphics programs section${NC}"
 if confirm_install "GIMP"; then
-	sudo apt install gimp
+	sudo $pkg_manager install gimp
 fi
 
 if confirm_install "Krita"; then
-	sudo apt install krita
+	sudo $pkg_manager install krita
 fi
 
 if confirm_install "Audacity"; then
-	sudo apt install audacity
+	sudo $pkg_manager install audacity
 fi
 
 if confirm_install "Blender"; then
-	sudo apt install blender
+	sudo $pkg_manager install blender
 fi
 
 # Install messaging apps
 echo -e "${BOLD_YELLOW}entering messaging apps section${NC}"
 
 if confirm_install "Telegram"; then
-	sudo apt install telegram-desktop
+	sudo $pkg_manager install telegram-desktop
 fi
 
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using wget, tee and snap.${NC}"
 if confirm_install "Signal"; then
 # 1. Install our official public software signing key:
 	wget -O- https://updates.signal.org/desktop/apt/keys.asc | gpg --dearmor > signal-desktop-keyring.gpg
@@ -313,12 +332,14 @@ if confirm_install "Signal"; then
 	sudo snap install signal-desktop
 fi
 
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using snap.${NC}"
 if confirm_install "Discord"; then
 	sudo snap install discord
 fi
 
 # Install games
 echo -e "${BOLD_YELLOW}entering games section${NC}"
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using apt-get.${NC}"
 if confirm_install "0 A.D."; then
 	sudo add-apt-repository ppa:wfg/0ad
 	sudo apt-get update
@@ -331,3 +352,4 @@ echo -e "${BOLD_GREEN}
 	| Enjoy! |
 	'--------'
 	${NC}"
+	sleep 9
