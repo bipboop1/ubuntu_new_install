@@ -205,6 +205,16 @@ if confirm_install "wget"; then
 	sudo apt-get install wget
 fi
 
+# install snap
+if confirm_install "snap"; then
+	sudo $pkg_manager install snapd
+fi
+
+# install flatpack
+if confirm_install "flatpak"; then
+	sudo $pkg_manager install flatpak libpamac-flatpak-plugin
+fi
+
 # Install Visual Studio Code via Snap
 echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using snap.${NC}"
 if confirm_install "Visual Studio Code (ubuntu)"; then
