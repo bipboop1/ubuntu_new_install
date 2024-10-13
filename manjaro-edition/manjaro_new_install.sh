@@ -239,6 +239,11 @@ if confirm_install "Arduino IDE"; then
 	sudo $pkg_manager install arduino
 fi
 
+# install timeshift for backups
+if confirm_install "Timeshift"; then
+	sudo $pkg_manager install timeshift
+fi
+
 # Install 42 school stuff
 echo -e "\n\n${BOLD_YELLOW}entering 42 school stuff section${NC}\n"
 if confirm_install "gcc"; then
@@ -327,6 +332,10 @@ fi
 
 if confirm_install "Blender"; then
 	sudo $pkg_manager install blender
+fi
+
+if confirm_install "MS Fonts"; then
+	sudo $pkg_manager install ttf-ms-fonts
 fi
 
 # Install messaging apps
