@@ -150,7 +150,7 @@ read pkg_manager
 
 # Install essential packages and development
 #if [ $SECT <= 2 ]; then
-	echo -e "${BOLD_YELLOW}entering essential packages and development section${NC}"
+	echo -e "\n\n${BOLD_YELLOW}entering essential packages and development section${NC}\n"
 	if confirm_install "curl"; then
 	    sudo $pkg_manager install curl
 	fi
@@ -222,7 +222,7 @@ if confirm_install "Arduino IDE"; then
 fi
 
 # Install 42 school stuff
-echo -e "${BOLD_YELLOW}entering 42 school stuff section${NC}"
+echo -e "\n\n${BOLD_YELLOW}entering 42 school stuff section${NC}\n"
 if confirm_install "gcc"; then
     sudo $pkg_manager install gcc
 fi
@@ -253,7 +253,7 @@ fi
 #fi
 
 # General purpose programs
-echo -e "${BOLD_YELLOW}entering general purpose section${NC}"
+echo -e "\n\n${BOLD_YELLOW}entering general purpose section${NC}\n"
 
 # Install Brave browser
 if confirm_install "Brave browser"; then
@@ -273,7 +273,7 @@ if confirm_install "ffmpeg"; then
 fi
 
 # Install torrenting stuff
-echo -e "${BOLD_YELLOW}entering torrents and downloads section${NC}"
+echo -e "\n\n${BOLD_YELLOW}entering torrents and downloads section${NC}\n"
 
 if confirm_install "Transmission"; then
 	sudo $pkg_manager install transmission
@@ -294,7 +294,7 @@ if confirm_install "seedmage"; then
 fi
 
 # Install graphics and creation programs
-echo -e "${BOLD_YELLOW}entering graphics programs section${NC}"
+echo -e "\n\n${BOLD_YELLOW}entering graphics programs section${NC}\n"
 if confirm_install "GIMP"; then
 	sudo $pkg_manager install gimp
 fi
@@ -312,7 +312,7 @@ if confirm_install "Blender"; then
 fi
 
 # Install messaging apps
-echo -e "${BOLD_YELLOW}entering messaging apps section${NC}"
+echo -e "\n\n${BOLD_YELLOW}entering messaging apps section${NC}\n"
 
 if confirm_install "Telegram"; then
 	sudo $pkg_manager install telegram-desktop
@@ -338,7 +338,7 @@ if confirm_install "Discord"; then
 fi
 
 # Install games
-echo -e "${BOLD_YELLOW}entering games section${NC}"
+echo -e "\n\n${BOLD_YELLOW}entering games section${NC}\n"
 echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using apt-get.${NC}"
 if confirm_install "0 A.D."; then
 	sudo add-apt-repository ppa:wfg/0ad
@@ -346,7 +346,7 @@ if confirm_install "0 A.D."; then
 	sudo apt-get install 0ad
 fi
 
-echo -e "${BOLD_GREEN}All selected programs and packages have been installed.${NC} ${BLUE}Except if there were any errors, i dunno i dont keep track of that.${NC}"
+echo -e "\n\n${BOLD_GREEN}All selected programs and packages have been installed.${NC} ${BLUE}Except if there were any errors, i dunno i dont keep track of that.${NC}"
 echo -e "${BOLD_GREEN}
 	.--------.
 	| Enjoy! |
