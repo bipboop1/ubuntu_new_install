@@ -227,6 +227,14 @@ if confirm_install "Visual Studio Code (manjaro)"; then
     sudo flatpak install com.visualstudio.code
 fi
 
+# install cursor ide
+echo -e "${BOLD_RED}WARNING: ${BOLD_YELLOW} next pkg is using git and pacman.${NC}"
+if confirm_install "Cursor IDE"; then
+	sudo pacman -Sy
+	sudo pacman -S git curl bash --noconfirm
+	git clone https://github.com/IsRengel/InstallCursorEditorLinux.git --depth=1 && cd InstallCursorEditorLinux && ./install.sh && cd .. && rm -rf InstallCursorEditorLinux
+fi
+
 if confirm_install "Arduino IDE"; then
 	sudo $pkg_manager install arduino
 fi
