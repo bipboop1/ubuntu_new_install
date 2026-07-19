@@ -1,59 +1,223 @@
 #!/bin/bash
 #
-# manjaro_new_install.sh — dialog-based TUI installer for a fresh Manjaro box.
+# manjaro_new_install.sh — an in-terminal installer for a fresh Manjaro box.
 #
-# Requires: dialog (auto-installed via pacman if missing)
+# No dialog/whiptail boxes: this draws menus directly in your terminal and
+# redraws them in place (like a CLI tool), instead of scrolling the screen.
 
 set -u
 
-BACKTITLE="Manjaro New Install"
-LOGFILE="$HOME/manjaro_install_$(date +%Y%m%d_%H%M%S).log"
-RESULTS_FILE="$(mktemp)"
-PKG_MANAGER=""
-declare -a TASKS=()
-declare -A TAG_DESC=()
+# ---------------------------------------------------------------------------
+# Terminal / rendering engine
+# ---------------------------------------------------------------------------
 
-trap 'rm -f "$RESULTS_FILE"' EXIT
+C_RESET=$(tput sgr0 2>/dev/null)
+C_BOLD=$(tput bold 2>/dev/null)
+C_DIM=$(tput dim 2>/dev/null)
+C_CYAN=$(tput setaf 6 2>/dev/null)
+C_GREEN=$(tput setaf 2 2>/dev/null)
+C_YELLOW=$(tput setaf 3 2>/dev/null)
+C_RED=$(tput setaf 1 2>/dev/null)
+C_MAGENTA=$(tput setaf 5 2>/dev/null)
+C_GRAY=$(tput setaf 8 2>/dev/null || tput setaf 7 2>/dev/null)
+NL=$'\n'
+
+PREV_LINES=0
+COLS=$(tput cols 2>/dev/null || echo 80)
+
+term_init()
+{
+	tput civis 2>/dev/null
+}
+
+term_cleanup()
+{
+	tput cnorm 2>/dev/null
+	printf '%s' "$C_RESET"
+}
+trap term_cleanup EXIT INT TERM
+
+# Redraws the given content in place, replacing whatever the previous
+# render() call printed.
+render()
+{
+	local content="$1"
+	if [ "$PREV_LINES" -gt 0 ]; then
+		printf '\033[%dA' "$PREV_LINES"
+	fi
+	printf '\033[J'
+	printf '%s' "$content"
+	PREV_LINES=$(printf '%s' "$content" | wc -l)
+}
+
+# Truncates a line to fit the terminal width (used for raw command output).
+clip()
+{
+	local s="$1"
+	local max=$(( COLS > 10 ? COLS - 4 : 76 ))
+	if [ "${#s}" -gt "$max" ]; then
+		echo "${s:0:max}…"
+	else
+		echo "$s"
+	fi
+}
+
+# Reads a single keypress and prints a normalized token:
+# UP DOWN LEFT RIGHT ENTER SPACE ESC BACKSPACE, or the literal character.
+read_key()
+{
+	local k rest
+	IFS= read -rsn1 k
+	if [[ $k == $'\x1b' ]]; then
+		IFS= read -rsn2 -t 0.05 rest
+		case "$rest" in
+			'[A') echo UP ;;
+			'[B') echo DOWN ;;
+			'[C') echo RIGHT ;;
+			'[D') echo LEFT ;;
+			*) echo ESC ;;
+		esac
+		return
+	fi
+	case "$k" in
+		'') echo ENTER ;;
+		' ') echo SPACE ;;
+		$'\x7f'|$'\x08') echo BACKSPACE ;;
+		*) echo "$k" ;;
+	esac
+}
+
+# ---------------------------------------------------------------------------
+# Generic UI widgets
+# ---------------------------------------------------------------------------
+
+# select_menu TITLE values_array labels_array [footer]
+# Prints result value on stdout via SELECTED_VALUE. Returns 1 on cancel.
+SELECTED_VALUE=""
+select_menu()
+{
+	local title="$1"; local -n _v="$2"; local -n _l="$3"
+	local footer="${4:-↑/↓ move    enter select    q quit}"
+	local n=${#_v[@]}
+	local cursor=0
+	while true; do
+		local frame="${C_BOLD}${C_MAGENTA}${title}${C_RESET}${NL}${NL}"
+		local i
+		for ((i = 0; i < n; i++)); do
+			if [ "$i" -eq "$cursor" ]; then
+				frame+="  ${C_CYAN}❯ ${_l[i]}${C_RESET}${NL}"
+			else
+				frame+="    ${C_DIM}${_l[i]}${C_RESET}${NL}"
+			fi
+		done
+		frame+="${NL}${C_DIM}${footer}${C_RESET}${NL}"
+		render "$frame"
+		local key; key=$(read_key)
+		case "$key" in
+			UP) cursor=$(( (cursor - 1 + n) % n )) ;;
+			DOWN) cursor=$(( (cursor + 1) % n )) ;;
+			ENTER) SELECTED_VALUE="${_v[cursor]}"; return 0 ;;
+			q|Q|ESC) return 1 ;;
+		esac
+	done
+}
+
+# checklist_menu TITLE tags_array labels_array states_array
+# Result goes into SELECTED_TAGS array. Returns 1 on cancel/esc.
+SELECTED_TAGS=()
+checklist_menu()
+{
+	local title="$1"; local -n _tags="$2"; local -n _labels="$3"; local -n _states="$4"
+	local n=${#_tags[@]}
+	local cursor=0 i
+	local -a sel=()
+	for ((i = 0; i < n; i++)); do
+		[ "${_states[i]}" = "on" ] && sel[i]=1 || sel[i]=0
+	done
+	while true; do
+		local frame="${C_BOLD}${C_MAGENTA}${title}${C_RESET}${NL}${NL}"
+		for ((i = 0; i < n; i++)); do
+			local mark="${C_DIM}[ ]${C_RESET}"
+			[ "${sel[i]}" = "1" ] && mark="${C_GREEN}[x]${C_RESET}"
+			if [ "$i" -eq "$cursor" ]; then
+				frame+="  ${C_CYAN}❯ ${mark} ${_labels[i]}${C_RESET}${NL}"
+			else
+				frame+="    ${mark} ${C_DIM}${_labels[i]}${C_RESET}${NL}"
+			fi
+		done
+		frame+="${NL}${C_DIM}↑/↓ move   space toggle   enter confirm   esc back${C_RESET}${NL}"
+		render "$frame"
+		local key; key=$(read_key)
+		case "$key" in
+			UP) cursor=$(( (cursor - 1 + n) % n )) ;;
+			DOWN) cursor=$(( (cursor + 1) % n )) ;;
+			SPACE) [ "${sel[cursor]}" = "1" ] && sel[cursor]=0 || sel[cursor]=1 ;;
+			ENTER)
+				SELECTED_TAGS=()
+				for ((i = 0; i < n; i++)); do
+					[ "${sel[i]}" = "1" ] && SELECTED_TAGS+=("${_tags[i]}")
+				done
+				return 0 ;;
+			ESC|q|Q) return 1 ;;
+		esac
+	done
+}
+
+# text_input PROMPT -> sets SELECTED_VALUE, returns 1 on esc
+text_input()
+{
+	local prompt="$1"
+	local buf=""
+	while true; do
+		local frame="${C_BOLD}${C_MAGENTA}${prompt}${C_RESET}${NL}${NL}"
+		frame+="  ${C_CYAN}> ${buf}${C_RESET}${C_DIM}_${C_RESET}${NL}${NL}"
+		frame+="${C_DIM}enter confirm   esc skip${C_RESET}${NL}"
+		render "$frame"
+		local key; key=$(read_key)
+		case "$key" in
+			ENTER) SELECTED_VALUE="$buf"; return 0 ;;
+			ESC) return 1 ;;
+			BACKSPACE) buf="${buf%?}" ;;
+			UP|DOWN|LEFT|RIGHT) : ;;
+			*) buf+="$key" ;;
+		esac
+	done
+}
+
+# msg_screen TITLE BODY -> waits for any key
+msg_screen()
+{
+	local title="$1" body="$2"
+	local frame="${C_BOLD}${C_MAGENTA}${title}${C_RESET}${NL}${NL}${body}${NL}${NL}${C_DIM}press any key to continue${C_RESET}${NL}"
+	render "$frame"
+	read_key >/dev/null
+}
 
 # ---------------------------------------------------------------------------
 # Bootstrap
 # ---------------------------------------------------------------------------
 
-ensure_dialog()
-{
-	if command -v dialog >/dev/null 2>&1; then
-		return
-	fi
-	echo "The 'dialog' package is required for this installer's UI."
-	if command -v pacman >/dev/null 2>&1; then
-		echo "Installing it now via pacman..."
-		sudo pacman -S --noconfirm --needed dialog || {
-			echo "Failed to install dialog. Aborting." >&2
-			exit 1
-		}
-	else
-		echo "pacman not found, cannot auto-install dialog. Aborting." >&2
-		exit 1
-	fi
-}
+LOGFILE="$HOME/manjaro_install_$(date +%Y%m%d_%H%M%S).log"
+PKG_MANAGER=""
+declare -a TASKS=()
+declare -A TAG_DESC=()
 
 detect_pkg_manager()
 {
 	if command -v pamac >/dev/null 2>&1 && command -v pacman >/dev/null 2>&1; then
-		PKG_MANAGER=$(dialog --stdout --backtitle "$BACKTITLE" \
-			--title "Package manager" \
-			--menu "Both pamac and pacman were found. Which should be used for installs?" 12 60 2 \
-			pamac  "Use pamac (handles AUR too)" \
-			pacman "Use pacman (official repos only)")
-		[ -z "$PKG_MANAGER" ] && exit 0
+		local vals=(pamac pacman) labels=("pamac (handles AUR too)" "pacman (official repos only)")
+		if select_menu "Both pamac and pacman found. Which should be used?" vals labels; then
+			PKG_MANAGER="$SELECTED_VALUE"
+		else
+			term_cleanup; exit 0
+		fi
 	elif command -v pamac >/dev/null 2>&1; then
 		PKG_MANAGER="pamac"
 	elif command -v pacman >/dev/null 2>&1; then
 		PKG_MANAGER="pacman"
 	else
-		dialog --backtitle "$BACKTITLE" --title "Error" \
-			--msgbox "Neither pamac nor pacman were found on this system. This script only supports Arch/Manjaro." 8 60
-		exit 1
+		msg_screen "Error" "${C_RED}Neither pamac nor pacman were found. This script only supports Arch/Manjaro.${C_RESET}"
+		term_cleanup; exit 1
 	fi
 }
 
@@ -165,75 +329,65 @@ cat_array_name()
 }
 
 # ---------------------------------------------------------------------------
-# UI helpers
+# Section helpers
 # ---------------------------------------------------------------------------
 
 add_task()
 {
-	local tag="$1"
+	local tag="$1" t
 	for t in "${TASKS[@]:-}"; do
 		[ "$t" = "$tag" ] && return
 	done
 	TASKS+=("$tag")
 }
 
-# Shows a checklist for one section and appends chosen tags to TASKS.
 show_section_checklist()
 {
 	local key="$1"
-	local arr_name
-	arr_name=$(cat_array_name "$key")
+	local arr_name; arr_name=$(cat_array_name "$key")
 	local -n items="$arr_name"
 
-	local menu_args=()
-	local i tag desc state
+	local -a tags=() labels=() states=()
+	local i
 	for ((i = 0; i < ${#items[@]}; i += 3)); do
-		tag="${items[i]}"; desc="${items[i+1]}"; state="${items[i+2]}"
-		TAG_DESC["$tag"]="$desc"
-		menu_args+=("$tag" "$desc" "$state")
+		tags+=("${items[i]}")
+		labels+=("${items[i+1]}")
+		states+=("${items[i+2]}")
+		TAG_DESC["${items[i]}"]="${items[i+1]}"
 	done
 
-	local selection
-	selection=$(dialog --stdout --backtitle "$BACKTITLE" \
-		--title "$(cat_label "$key")" \
-		--separate-output \
-		--checklist "SPACE to toggle, ENTER to confirm, ESC to skip this section" \
-		22 78 14 "${menu_args[@]}")
-
-	[ $? -ne 0 ] && return
-
-	while IFS= read -r tag; do
-		[ -n "$tag" ] && add_task "$tag"
-	done <<< "$selection"
+	if checklist_menu "$(cat_label "$key")" tags labels states; then
+		local t
+		for t in "${SELECTED_TAGS[@]:-}"; do
+			[ -n "$t" ] && add_task "$t"
+		done
+	fi
 }
 
 show_full_list()
 {
-	local text=""
-	local key arr_name items i
+	local body="" key arr_name items i
 	for key in "${CAT_KEYS[@]}"; do
 		arr_name=$(cat_array_name "$key")
 		local -n items="$arr_name"
-		text+="$(cat_label "$key")\n"
+		body+="${C_YELLOW}$(cat_label "$key")${C_RESET}${NL}"
 		for ((i = 0; i < ${#items[@]}; i += 3)); do
-			text+="   - ${items[i+1]}\n"
+			body+="   ${C_DIM}-${C_RESET} ${items[i+1]}${NL}"
 		done
-		text+="\n"
+		body+="${NL}"
 	done
-	dialog --backtitle "$BACKTITLE" --title "Full package list" \
-		--msgbox "$(echo -e "$text")" 28 78
+	msg_screen "Full package list" "$body"
 }
 
 ask_42_login()
 {
-	local login
-	login=$(dialog --stdout --backtitle "$BACKTITLE" --title "42 login" \
-		--inputbox "Enter your 42 login (leave empty to skip):" 8 50)
-	if [ -n "$login" ]; then
-		{
-			echo "USER=$login"
-			echo "MAIL=$login@student.42.fr"
-		} >> ~/.zshrc
+	if text_input "Enter your 42 login (esc to skip):"; then
+		if [ -n "$SELECTED_VALUE" ]; then
+			{
+				echo "USER=$SELECTED_VALUE"
+				echo "MAIL=$SELECTED_VALUE@student.42.fr"
+			} >> ~/.zshrc
+		fi
 	fi
 }
 
@@ -279,7 +433,6 @@ run_task()
 			mkdir -p ~/.vim/plugin \
 				&& wget -qO ~/.vim/plugin/stdheader.vim \
 					https://raw.githubusercontent.com/42Paris/42header/71e6a4df6d72ae87a080282bf45bb993da6146b2/plugin/stdheader.vim
-			ask_42_login
 			;;
 		brave)    install_pkg brave-browser ;;
 		vlc)      install_pkg vlc ;;
@@ -314,144 +467,169 @@ run_task()
 	esac
 }
 
+declare -a STATUS=()
+declare -a TAIL=()
+LINE_COUNT=0
+SPIN_CHARS='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+
+draw_progress()
+{
+	local current="$1"
+	local total=${#TASKS[@]}
+	local frame="${C_BOLD}${C_MAGENTA}Installing selected packages${C_RESET}  ${C_DIM}($current/$total)${C_RESET}${NL}${NL}"
+	local i
+	for ((i = 0; i < total; i++)); do
+		local icon label="${TAG_DESC[${TASKS[i]}]:-${TASKS[i]}}"
+		case "${STATUS[i]}" in
+			ok)      icon="${C_GREEN}✔${C_RESET}" ;;
+			fail)    icon="${C_RED}✘${C_RESET}" ;;
+			running) icon="${C_YELLOW}${SPIN_CHARS:$((LINE_COUNT % ${#SPIN_CHARS})):1}${C_RESET}" ;;
+			*)       icon="${C_DIM}○${C_RESET}" ;;
+		esac
+		frame+="  $icon  ${label}${NL}"
+	done
+	if [ ${#TAIL[@]} -gt 0 ]; then
+		frame+="${NL}${C_DIM}output:${C_RESET}${NL}"
+		local l
+		for l in "${TAIL[@]}"; do
+			frame+="  ${C_GRAY}$(clip "$l")${C_RESET}${NL}"
+		done
+	fi
+	render "$frame"
+}
+
 run_all_tasks()
 {
 	[ ${#TASKS[@]} -eq 0 ] && return
 
 	# Oh My Zsh restarts the shell session, so it must run last.
-	local reordered=() has_ohmyzsh=0
+	local reordered=() has_ohmyzsh=0 t
 	for t in "${TASKS[@]}"; do
 		if [ "$t" = "ohmyzsh" ]; then has_ohmyzsh=1; else reordered+=("$t"); fi
 	done
 	[ "$has_ohmyzsh" -eq 1 ] && reordered+=("ohmyzsh")
 	TASKS=("${reordered[@]}")
 
-	: > "$RESULTS_FILE"
-	local total=${#TASKS[@]} count=0
+	local total=${#TASKS[@]} i
+	STATUS=()
+	for ((i = 0; i < total; i++)); do STATUS[i]="pending"; done
 
-	(
-		for tag in "${TASKS[@]}"; do
-			count=$((count + 1))
-			echo $(( count * 100 / total ))
-			echo "XXX"
-			echo "[$count/$total] ${TAG_DESC[$tag]:-$tag}"
-			echo "XXX"
-			{
-				echo "===== $tag: ${TAG_DESC[$tag]:-} ====="
-				if run_task "$tag"; then
-					echo "$tag:OK" >> "$RESULTS_FILE"
-				else
-					echo "$tag:FAIL" >> "$RESULTS_FILE"
-				fi
-			} >> "$LOGFILE" 2>&1
-		done
-	) | dialog --stdout --backtitle "$BACKTITLE" --title "Installing selected packages" \
-		--gauge "Starting..." 8 70 0
+	for ((i = 0; i < total; i++)); do
+		local tag="${TASKS[i]}"
+		STATUS[i]="running"
+		TAIL=()
+		draw_progress $((i + 1))
+
+		# 42header needs to prompt for a login mid-task; do that first.
+		if [ "$tag" = "42header" ]; then
+			ask_42_login
+		fi
+
+		local exit_code=0 line
+		while IFS= read -r line; do
+			if [[ $line == __TASK_EXIT__* ]]; then
+				exit_code="${line#__TASK_EXIT__}"
+			else
+				echo "$line" >> "$LOGFILE"
+				LINE_COUNT=$((LINE_COUNT + 1))
+				TAIL+=("$line")
+				[ ${#TAIL[@]} -gt 6 ] && TAIL=("${TAIL[@]: -6}")
+				draw_progress $((i + 1))
+			fi
+		done < <( { run_task "$tag"; printf '__TASK_EXIT__%d\n' "$?"; } 2>&1 )
+
+		echo "===== $tag exited $exit_code =====" >> "$LOGFILE"
+		if [ "$exit_code" -eq 0 ]; then STATUS[i]="ok"; else STATUS[i]="fail"; fi
+		draw_progress $((i + 1))
+	done
 }
 
 show_report()
 {
-	local text="Log saved to: $LOGFILE\n\n"
-	local ok=0 fail=0
-	while IFS=: read -r tag status; do
-		[ -z "$tag" ] && continue
-		if [ "$status" = "OK" ]; then
-			text+="  [OK]   ${TAG_DESC[$tag]:-$tag}\n"
+	local body="${C_DIM}Log saved to: $LOGFILE${C_RESET}${NL}${NL}"
+	local ok=0 fail=0 i
+	for ((i = 0; i < ${#TASKS[@]}; i++)); do
+		local label="${TAG_DESC[${TASKS[i]}]:-${TASKS[i]}}"
+		if [ "${STATUS[i]}" = "ok" ]; then
+			body+="  ${C_GREEN}✔${C_RESET} ${label}${NL}"
 			ok=$((ok + 1))
 		else
-			text+="  [FAIL] ${TAG_DESC[$tag]:-$tag}\n"
+			body+="  ${C_RED}✘${C_RESET} ${label}${NL}"
 			fail=$((fail + 1))
 		fi
-	done < "$RESULTS_FILE"
-	text="Done: $ok succeeded, $fail failed.\n\n$text"
-	dialog --backtitle "$BACKTITLE" --title "Installation report" --msgbox "$(echo -e "$text")" 24 76
+	done
+	msg_screen "Done: ${ok} succeeded, ${fail} failed" "$body"
 }
 
 # ---------------------------------------------------------------------------
 # Main menu flow
 # ---------------------------------------------------------------------------
 
-welcome_screen()
-{
-	dialog --backtitle "$BACKTITLE" --title "Welcome" --msgbox \
-"  __  __            _
- |  \\/  | __ _ _ __ (_) __ _ _ __ ___
- | |\\/| |/ _\` | '_ \\| |/ _\` | '__/ _ \\
- | |  | | (_| | | | | | (_| | | | (_) |
- |_|  |_|\\__,_|_| |_|_|\\__,_|_|  \\___/
-
-        New Install — Manjaro Edition
-
-Pick and choose the software you want installed.
-Use SPACE to select, ENTER to confirm, ESC to go back." 16 60
-}
-
 main_menu()
 {
 	while true; do
-		local choice
-		choice=$(dialog --stdout --backtitle "$BACKTITLE" --title "Main menu" \
-			--menu "What would you like to do?" 15 62 4 \
-			1 "Full install (go through every category)" \
-			2 "Choose specific categories" \
-			3 "View full package list" \
-			0 "Exit")
-
-		case "$choice" in
-			1)
+		local vals=(full categories list exit)
+		local labels=(
+			"Full install (go through every category)"
+			"Choose specific categories"
+			"View full package list"
+			"Exit"
+		)
+		if ! select_menu "Manjaro New Install — what would you like to do?" vals labels; then
+			term_cleanup; exit 0
+		fi
+		case "$SELECTED_VALUE" in
+			full)
+				local key
 				for key in "${CAT_KEYS[@]}"; do
 					show_section_checklist "$key"
 				done
-				break ;;
-			2)
+				return ;;
+			categories)
 				pick_categories
-				break ;;
-			3)
+				return ;;
+			list)
 				show_full_list ;;
-			0|"")
-				clear
-				exit 0 ;;
+			exit)
+				term_cleanup; exit 0 ;;
 		esac
 	done
 }
 
 pick_categories()
 {
-	local menu_args=() key
+	local -a tags=() labels=() states=()
+	local key
 	for key in "${CAT_KEYS[@]}"; do
-		menu_args+=("$key" "$(cat_label "$key")" off)
+		tags+=("$key"); labels+=("$(cat_label "$key")"); states+=("off")
 	done
-
-	local chosen
-	chosen=$(dialog --stdout --backtitle "$BACKTITLE" --title "Choose categories" \
-		--separate-output --checklist "Select which categories to configure" \
-		18 66 8 "${menu_args[@]}")
-	[ $? -ne 0 ] && return
-
-	while IFS= read -r key; do
-		[ -n "$key" ] && show_section_checklist "$key"
-	done <<< "$chosen"
+	if checklist_menu "Choose categories" tags labels states; then
+		local k
+		for k in "${SELECTED_TAGS[@]:-}"; do
+			[ -n "$k" ] && show_section_checklist "$k"
+		done
+	fi
 }
 
 confirm_and_run()
 {
 	if [ ${#TASKS[@]} -eq 0 ]; then
-		dialog --backtitle "$BACKTITLE" --title "Nothing selected" \
-			--msgbox "No packages were selected. Exiting." 7 50
-		clear
-		exit 0
+		msg_screen "Nothing selected" "${C_DIM}No packages were selected. Exiting.${C_RESET}"
+		term_cleanup; exit 0
 	fi
 
-	local summary="" t
+	local body="${C_BOLD}${C_MAGENTA}Confirm installation${C_RESET}${NL}${NL}About to install/run ${#TASKS[@]} item(s):${NL}${NL}"
+	local t
 	for t in "${TASKS[@]}"; do
-		summary+="  - ${TAG_DESC[$t]:-$t}\n"
+		body+="  ${C_DIM}-${C_RESET} ${TAG_DESC[$t]:-$t}${NL}"
 	done
 
-	dialog --backtitle "$BACKTITLE" --title "Confirm installation" \
-		--yesno "$(echo -e "About to install/run ${#TASKS[@]} item(s):\n\n$summary")" 24 74
-	if [ $? -ne 0 ]; then
-		clear
-		exit 0
+	local vals=(yes no) labels=("Yes, install" "No, cancel")
+	if ! select_menu "$body" vals labels; then
+		term_cleanup; exit 0
+	fi
+	if [ "$SELECTED_VALUE" != "yes" ]; then
+		term_cleanup; exit 0
 	fi
 
 	run_all_tasks
@@ -462,12 +640,11 @@ confirm_and_run()
 # Entry point
 # ---------------------------------------------------------------------------
 
-ensure_dialog
+term_init
 detect_pkg_manager
-welcome_screen
 main_menu
 confirm_and_run
 
-dialog --backtitle "$BACKTITLE" --title "Enjoy!" \
-	--msgbox "All done. Enjoy your new Manjaro setup!" 7 45
+msg_screen "Enjoy!" "${C_GREEN}All done. Enjoy your new Manjaro setup!${C_RESET}"
+term_cleanup
 clear
